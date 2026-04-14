@@ -369,76 +369,74 @@ export default function CameraApp() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24">
-              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-3">
-                <div className="flex items-center gap-2 text-blue-400">
-                  <Smartphone className="w-4 h-4" />
-                  <h3 className="text-xs font-bold font-mono">ANDROID 7+ DEPLOYMENT</h3>
-                </div>
-                <p className="text-blue-100/70 text-[11px] leading-relaxed">
-                  For Android 7.0 and above, you <strong>must</strong> use a <code>FileProvider</code> to share media securely. Standard file URIs will cause crashes on newer Android versions.
-                </p>
-              </div>
+              <Tabs defaultValue="setup" className="w-full">
+                <TabsList className="w-full bg-white/5 p-1 mb-6">
+                  <TabsTrigger value="setup" className="flex-1 font-mono text-[10px]">SDK_SETUP</TabsTrigger>
+                  <TabsTrigger value="fix" className="flex-1 font-mono text-[10px]">FIX_TRIGGER</TabsTrigger>
+                </TabsList>
 
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 1: MANIFEST (FileProvider)</h3>
-                  <span className="text-[9px] text-green-500 font-mono">REQUIRED FOR 7.0+</span>
-                </div>
-                <div className="bg-black p-4 rounded-lg border border-white/5">
-                  <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap">
-{`<!-- Inside <application> -->
-<provider
-    android:name="androidx.core.content.FileProvider"
-    android:authorities="\${applicationId}.fileprovider"
-    android:exported="false"
-    android:grantUriPermissions="true">
-    <meta-data
-        android:name="android.support.FILE_PROVIDER_PATHS"
-        android:resource="@xml/file_paths" />
-</provider>`}
-                  </pre>
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 2: JAVA (Secure Sharing)</h3>
-                  <span className="text-[9px] text-blue-500 font-mono">CONTENT:// URI</span>
-                </div>
-                <div className="bg-black p-4 rounded-lg border border-white/5">
-                  <pre className="text-[10px] text-blue-300 font-mono whitespace-pre-wrap">
-{`public void returnResult(File file) {
-    Uri contentUri = FileProvider.getUriForFile(this, 
-        getPackageName() + ".fileprovider", file);
-        
-    Intent result = new Intent();
-    result.setData(contentUri);
-    result.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-    setResult(RESULT_OK, result);
-    finish();
-}`}
-                  </pre>
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-[10px] font-bold font-mono text-white/40">ANDROID 7+ CHECKLIST</h3>
-                <div className="space-y-2">
-                  {[
-                    "Create res/xml/file_paths.xml",
-                    "Use androidx.core.content.FileProvider",
-                    "Grant READ_URI_PERMISSION flags",
-                    "Handle MediaStore.EXTRA_OUTPUT if present"
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
-                      <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center text-[10px] text-blue-400 font-bold">
-                        {i + 1}
-                      </div>
-                      <span className="text-[11px] text-white/70 font-mono">{item}</span>
+                <TabsContent value="setup" className="space-y-8">
+                  <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-3">
+                    <div className="flex items-center gap-2 text-blue-400">
+                      <Smartphone className="w-4 h-4" />
+                      <h3 className="text-xs font-bold font-mono">ANDROID 7.1.2 SETUP</h3>
                     </div>
-                  ))}
-                </div>
-              </section>
+                    <p className="text-blue-100/70 text-[11px] leading-relaxed">
+                      For Android 7.1.2, you must use a high-priority intent filter and a <code>FileProvider</code>. Raw file paths will be rejected by the system.
+                    </p>
+                  </div>
+
+                  <section className="space-y-4">
+                    <h3 className="text-[10px] font-bold font-mono text-white/40 uppercase">1. Manifest Intent (Robust)</h3>
+                    <div className="bg-black p-4 rounded-lg border border-white/5">
+                      <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap">
+{`<intent-filter android:priority="999">
+    <action android:name="android.media.action.IMAGE_CAPTURE" />
+    <action android:name="android.media.action.VIDEO_CAPTURE" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <data android:mimeType="image/*" />
+    <data android:mimeType="video/*" />
+</intent-filter>`}
+                      </pre>
+                    </div>
+                  </section>
+
+                  <section className="space-y-4">
+                    <h3 className="text-[10px] font-bold font-mono text-white/40 uppercase">2. FileProvider (Security)</h3>
+                    <div className="bg-black p-4 rounded-lg border border-white/5">
+                      <pre className="text-[10px] text-blue-300 font-mono whitespace-pre-wrap">
+{`Uri contentUri = FileProvider.getUriForFile(this, 
+    getPackageName() + ".fileprovider", file);
+result.setData(contentUri);
+result.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);`}
+                      </pre>
+                    </div>
+                  </section>
+                </TabsContent>
+
+                <TabsContent value="fix" className="space-y-6">
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl space-y-2">
+                    <h3 className="text-xs font-bold font-mono text-red-400">MEDIAN.CO FIX</h3>
+                    <p className="text-red-100/60 text-[10px]">To make it work with Median.co, you must add a Custom Manifest entry in their dashboard.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="p-4 bg-white/5 rounded-lg border border-white/5 space-y-2">
+                      <h4 className="text-[10px] font-bold text-white/80 font-mono">1. MEDIAN DASHBOARD</h4>
+                      <p className="text-[10px] text-white/40 leading-relaxed">
+                        Go to <strong>Native Core &gt; Android &gt; Custom Manifest</strong>. Paste the <code>intent-filter</code> code from the SETUP tab, but change the activity name to <code>com.gonative.android.MainActivity</code>.
+                      </p>
+                    </div>
+
+                    <div className="p-4 bg-white/5 rounded-lg border border-white/5 space-y-2">
+                      <h4 className="text-[10px] font-bold text-white/80 font-mono">2. CLEAR DEFAULTS</h4>
+                      <p className="text-[10px] text-white/40 leading-relaxed">
+                        Go to <strong>Settings &gt; Apps &gt; Camera</strong>. Tap 'Open by default' and select <strong>'Clear Defaults'</strong>. This is mandatory for the menu to appear.
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           </motion.div>
         )}
