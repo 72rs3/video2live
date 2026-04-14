@@ -1,0 +1,6 @@
+{
+  "name": "Cam2Pic Web",
+  "description": "A professional-grade web camera application for capturing and processing photos with real-time filters.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["camera", "image-processing"]
+}
