@@ -52,7 +52,20 @@ export default function CameraApp() {
   const [error, setError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
   const [showNativeGuide, setShowNativeGuide] = useState(false);
+  const [isIntentMode, setIsIntentMode] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+
+  useEffect(() => {
+    // Check if we are in "Intent Mode" via URL params
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') === 'capture' || params.get('mode') === 'spoof') {
+      setIsIntentMode(true);
+      // Automatically trigger gallery if in spoof mode
+      if (params.get('auto') === 'true') {
+        setTimeout(() => document.getElementById('video-upload')?.click(), 1000);
+      }
+    }
+  }, []);
   const [virtualVideoUrl, setVirtualVideoUrl] = useState<string | null>(null);
   const [isVirtualMode, setIsVirtualMode] = useState(false);
   const virtualVideoRef = useRef<HTMLVideoElement>(null);
@@ -174,6 +187,25 @@ export default function CameraApp() {
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col md:relative md:w-full md:max-w-4xl md:h-[700px] md:rounded-3xl md:overflow-hidden md:shadow-2xl">
+      {/* Top Status Bar - Professional Style */}
+      <div className="h-12 bg-black flex items-center justify-between px-6 border-b border-white/5">
+        <div className="flex items-center gap-2">
+          <div className={cn("w-2 h-2 rounded-full", isVirtualMode ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]", "animate-pulse")} />
+          <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-white/90">
+            {isVirtualMode ? 'VIRTUAL_SOURCE_ACTIVE' : 'SYSTEM_LIVE_FEED'}
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowNativeGuide(true)}
+            className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+          >
+            <Code2 className="w-3 h-3 text-blue-400" />
+            <span className="text-[9px] font-mono text-white/60">NATIVE_SDK</span>
+          </button>
+        </div>
+      </div>
+
       {/* Viewport Area */}
       <div className="flex-1 relative bg-black overflow-hidden">
         {!isVirtualMode ? (
@@ -207,34 +239,24 @@ export default function CameraApp() {
         
         {/* Android 10 Style Overlays */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-12 left-6 flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <div className={cn("w-2 h-2 rounded-full", isVirtualMode ? "bg-blue-500" : "bg-red-500", "animate-pulse")} />
-              <span className="text-white/80 font-mono text-[10px] tracking-widest">{isVirtualMode ? 'VIRTUAL' : 'LIVE'}</span>
-            </div>
-          </div>
-
-          <div className="absolute top-12 right-6">
-             <button 
-              onClick={() => setShowNativeGuide(true)}
-              className="pointer-events-auto p-2 rounded-full bg-black/20 backdrop-blur-md border border-white/10 text-white"
-            >
-              <Code2 className="w-5 h-5" />
-            </button>
-          </div>
-
           {/* Grid Lines */}
           <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-10">
-            <div className="border-r border-b border-white" />
-            <div className="border-r border-b border-white" />
-            <div className="border-b border-white" />
-            <div className="border-r border-b border-white" />
-            <div className="border-r border-b border-white" />
-            <div className="border-b border-white" />
-            <div className="border-r border-white" />
-            <div className="border-r border-white" />
+            <div className="border-r border-b border-white/40" />
+            <div className="border-r border-b border-white/40" />
+            <div className="border-b border-white/40" />
+            <div className="border-r border-b border-white/40" />
+            <div className="border-r border-b border-white/40" />
+            <div className="border-b border-white/40" />
+            <div className="border-r border-white/40" />
+            <div className="border-r border-white/40" />
             <div />
           </div>
+
+          {/* Corner Brackets */}
+          <div className="absolute top-8 left-8 w-8 h-8 border-t-2 border-l-2 border-white/20" />
+          <div className="absolute top-8 right-8 w-8 h-8 border-t-2 border-r-2 border-white/20" />
+          <div className="absolute bottom-8 left-8 w-8 h-8 border-b-2 border-l-2 border-white/20" />
+          <div className="absolute bottom-8 right-8 w-8 h-8 border-b-2 border-r-2 border-white/20" />
         </div>
 
         {/* Capture Flash */}
@@ -286,12 +308,21 @@ export default function CameraApp() {
             )}
           </button>
 
-          <button 
-            onClick={capturePhoto}
-            className="w-20 h-20 rounded-full border-4 border-white/30 p-1 active:scale-90 transition-transform"
-          >
-            <div className="w-full h-full rounded-full bg-white" />
-          </button>
+          {isIntentMode && isVirtualMode ? (
+            <button 
+              onClick={() => alert("NATIVE_BRIDGE: Media result sent to calling application.")}
+              className="px-8 h-16 rounded-full bg-blue-600 text-white font-mono font-bold text-xs tracking-widest animate-pulse shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+            >
+              SEND_TO_SYSTEM
+            </button>
+          ) : (
+            <button 
+              onClick={capturePhoto}
+              className="w-20 h-20 rounded-full border-4 border-white/30 p-1 active:scale-90 transition-transform"
+            >
+              <div className="w-full h-full rounded-full bg-white" />
+            </button>
+          )}
 
           <button 
             onClick={isVirtualMode ? toggleMode : () => setFacingMode(p => p === 'user' ? 'environment' : 'user')}
@@ -337,54 +368,82 @@ export default function CameraApp() {
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-              <section className="space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-24">
+              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-3">
                 <div className="flex items-center gap-2 text-blue-400">
-                  <Info className="w-4 h-4" />
-                  <h3 className="text-xs font-bold font-mono">HOW IT WORKS</h3>
+                  <Smartphone className="w-4 h-4" />
+                  <h3 className="text-xs font-bold font-mono">PROFESSIONAL DEPLOYMENT</h3>
                 </div>
-                <p className="text-white/60 text-sm leading-relaxed">
-                  To spoof other apps on Android 10, you must build a native app that intercepts the <code className="text-blue-300">IMAGE_CAPTURE</code> intent. When another app (like WhatsApp) asks for a photo, Android will offer your app as a choice.
-                </p>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-xs font-bold font-mono text-white/40">1. ANDROID MANIFEST (The Trick)</h3>
-                <div className="bg-black p-4 rounded-lg overflow-x-auto">
-                  <pre className="text-[10px] text-green-400 font-mono">
-{`<activity android:name=".CameraActivity">
-  <intent-filter>
-    <action android:name="android.media.action.IMAGE_CAPTURE" />
-    <category android:name="android.intent.category.DEFAULT" />
-  </intent-filter>
-</activity>`}
-                  </pre>
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-xs font-bold font-mono text-white/40">2. JAVA LOGIC (Sending the Fake)</h3>
-                <div className="bg-black p-4 rounded-lg overflow-x-auto">
-                  <pre className="text-[10px] text-blue-400 font-mono">
-{`// Inside your Activity
-Uri photoUri = getIntent().getParcelableExtra(MediaStore.EXTRA_OUTPUT);
-Bitmap fakeImage = loadFromGallery(); // Your video frame
-
-OutputStream os = getContentResolver().openOutputStream(photoUri);
-fakeImage.compress(Bitmap.CompressFormat.JPEG, 100, os);
-
-setResult(RESULT_OK);
-finish();`}
-                  </pre>
-                </div>
-              </section>
-
-              <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-2">
-                <p className="text-blue-200 text-xs font-bold">⚠️ Technical Note</p>
-                <p className="text-blue-200/60 text-[11px]">
-                  This code must be compiled in Android Studio. It cannot run directly in a browser because browsers are not allowed to handle system intents.
+                <p className="text-blue-100/70 text-[11px] leading-relaxed">
+                  To achieve the "Option 2" system menu, you cannot use a web converter. You must create a project in <strong>Android Studio</strong> and use these specific files to bridge this website to the Android OS.
                 </p>
               </div>
+
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 1: ANDROIDMANIFEST.XML</h3>
+                  <span className="text-[9px] text-green-500 font-mono">CRITICAL FOR INTENT</span>
+                </div>
+                <div className="bg-black p-4 rounded-lg border border-white/5">
+                  <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap">
+{`<!-- Add this inside <activity> in your Android Studio project -->
+<intent-filter android:label="Cam2Pic Spoof">
+    <action android:name="android.media.action.IMAGE_CAPTURE" />
+    <action android:name="android.media.action.VIDEO_CAPTURE" />
+    <category android:name="android.intent.category.DEFAULT" />
+</intent-filter>`}
+                  </pre>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 2: MAINACTIVITY.JAVA (The Bridge)</h3>
+                  <span className="text-[9px] text-blue-500 font-mono">HANDLES THE RETURN</span>
+                </div>
+                <div className="bg-black p-4 rounded-lg border border-white/5">
+                  <pre className="text-[10px] text-blue-300 font-mono whitespace-pre-wrap">
+{`@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    
+    // Detect if we were opened by WhatsApp/System
+    Intent intent = getIntent();
+    if (MediaStore.ACTION_IMAGE_CAPTURE.equals(intent.getAction())) {
+        // Load the Web UI with intent mode active
+        webView.loadUrl("YOUR_VERCEL_URL?intent=capture&auto=true");
+    }
+}
+
+// Function to return the fake video/photo to the calling app
+public void returnResult(Uri fakeMediaUri) {
+    Intent result = new Intent();
+    result.setData(fakeMediaUri);
+    setResult(RESULT_OK, result);
+    finish();
+}`}
+                  </pre>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 3: INTEGRATION CHECKLIST</h3>
+                <div className="space-y-2">
+                  {[
+                    "Use Capacitor.js or a Custom WebView",
+                    "Declare CAMERA and STORAGE permissions",
+                    "Set 'android:exported=\"true\"' in Manifest",
+                    "Target Android API 29 (Android 10) for best results"
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+                      <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center text-[10px] text-blue-400 font-bold">
+                        {i + 1}
+                      </div>
+                      <span className="text-[11px] text-white/70 font-mono">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
           </motion.div>
         )}

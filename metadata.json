@@ -1,6 +1,5 @@
 {
-  "name": "Cam2Pic Web",
-  "description": "A professional-grade web camera application for capturing and processing photos with real-time filters.",
-  "requestFramePermissions": ["camera"],
-  "majorCapabilities": ["camera", "image-processing"]
+  "name": "Cam2Pic Pro: System Spoof Utility",
+  "description": "Professional camera intent handler and virtual media source for Android 10. Intercepts system camera requests to provide gallery-sourced live feeds.",
+  "requestFramePermissions": ["camera"]
 }
