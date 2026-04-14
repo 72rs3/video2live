@@ -372,53 +372,48 @@ export default function CameraApp() {
               <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl space-y-3">
                 <div className="flex items-center gap-2 text-blue-400">
                   <Smartphone className="w-4 h-4" />
-                  <h3 className="text-xs font-bold font-mono">PROFESSIONAL DEPLOYMENT</h3>
+                  <h3 className="text-xs font-bold font-mono">ANDROID 7+ DEPLOYMENT</h3>
                 </div>
                 <p className="text-blue-100/70 text-[11px] leading-relaxed">
-                  To achieve the "Option 2" system menu, you cannot use a web converter. You must create a project in <strong>Android Studio</strong> and use these specific files to bridge this website to the Android OS.
+                  For Android 7.0 and above, you <strong>must</strong> use a <code>FileProvider</code> to share media securely. Standard file URIs will cause crashes on newer Android versions.
                 </p>
               </div>
 
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 1: ANDROIDMANIFEST.XML</h3>
-                  <span className="text-[9px] text-green-500 font-mono">CRITICAL FOR INTENT</span>
+                  <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 1: MANIFEST (FileProvider)</h3>
+                  <span className="text-[9px] text-green-500 font-mono">REQUIRED FOR 7.0+</span>
                 </div>
                 <div className="bg-black p-4 rounded-lg border border-white/5">
                   <pre className="text-[10px] text-green-400 font-mono whitespace-pre-wrap">
-{`<!-- Add this inside <activity> in your Android Studio project -->
-<intent-filter android:label="Cam2Pic Spoof">
-    <action android:name="android.media.action.IMAGE_CAPTURE" />
-    <action android:name="android.media.action.VIDEO_CAPTURE" />
-    <category android:name="android.intent.category.DEFAULT" />
-</intent-filter>`}
+{`<!-- Inside <application> -->
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="\${applicationId}.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_paths" />
+</provider>`}
                   </pre>
                 </div>
               </section>
 
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 2: MAINACTIVITY.JAVA (The Bridge)</h3>
-                  <span className="text-[9px] text-blue-500 font-mono">HANDLES THE RETURN</span>
+                  <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 2: JAVA (Secure Sharing)</h3>
+                  <span className="text-[9px] text-blue-500 font-mono">CONTENT:// URI</span>
                 </div>
                 <div className="bg-black p-4 rounded-lg border border-white/5">
                   <pre className="text-[10px] text-blue-300 font-mono whitespace-pre-wrap">
-{`@Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    
-    // Detect if we were opened by WhatsApp/System
-    Intent intent = getIntent();
-    if (MediaStore.ACTION_IMAGE_CAPTURE.equals(intent.getAction())) {
-        // Load the Web UI with intent mode active
-        webView.loadUrl("YOUR_VERCEL_URL?intent=capture&auto=true");
-    }
-}
-
-// Function to return the fake video/photo to the calling app
-public void returnResult(Uri fakeMediaUri) {
+{`public void returnResult(File file) {
+    Uri contentUri = FileProvider.getUriForFile(this, 
+        getPackageName() + ".fileprovider", file);
+        
     Intent result = new Intent();
-    result.setData(fakeMediaUri);
+    result.setData(contentUri);
+    result.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
     setResult(RESULT_OK, result);
     finish();
 }`}
@@ -427,13 +422,13 @@ public void returnResult(Uri fakeMediaUri) {
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[10px] font-bold font-mono text-white/40">STEP 3: INTEGRATION CHECKLIST</h3>
+                <h3 className="text-[10px] font-bold font-mono text-white/40">ANDROID 7+ CHECKLIST</h3>
                 <div className="space-y-2">
                   {[
-                    "Use Capacitor.js or a Custom WebView",
-                    "Declare CAMERA and STORAGE permissions",
-                    "Set 'android:exported=\"true\"' in Manifest",
-                    "Target Android API 29 (Android 10) for best results"
+                    "Create res/xml/file_paths.xml",
+                    "Use androidx.core.content.FileProvider",
+                    "Grant READ_URI_PERMISSION flags",
+                    "Handle MediaStore.EXTRA_OUTPUT if present"
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
                       <div className="w-4 h-4 rounded-full bg-blue-500/20 flex items-center justify-center text-[10px] text-blue-400 font-bold">
